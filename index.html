@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Lab: Kesetimbangan Dinamis Kimia</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-dark: #5b21b6;
+      --primary-light: #ddd6fe;
+      --accent: #a855f7;
+      --bg-dark: #0f0c1b;
+      --surface: #ffffff;
+      --surface-subtle: #fbf9fe;
+      --border: #e9d5ff;
+      --text: #1e1b4b;
+      --text-muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top center, #f5f3ff 0%, #ede9fe 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .main-wrapper {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Header Bar */
+    header {
+      background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+      color: white;
+      padding: 22px 28px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.35);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: gap;
+      gap: 16px;
+    }
+
+    .title-area h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .title-area p {
+      font-size: 13px;
+      color: var(--primary-light);
+      margin-top: 4px;
+    }
+
+    .equation-badge {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .equation-badge span.rev {
+      color: #facc15;
+      font-size: 18px;
+      margin: 0 6px;
+    }
+
+    /* Grid Layout */
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 860px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .glass-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 8px 20px rgba(109, 40, 217, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1.5px solid #f3e8ff;
+    }
+
+    .card-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .card-head h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--primary-dark);
+    }
+
+    /* Tabung Makroskopis */
+    .tube-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 0;
+      background: radial-gradient(circle at center, #faf5ff 0%, #f3e8ff 100%);
+      border-radius: 14px;
+      border: 1px dashed #d8b4fe;
+    }
+
+    .stopper-cap {
+      width: 50px;
+      height: 18px;
+      background: #475569;
+      border-radius: 5px 5px 0 0;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .glass-tube {
+      width: 46px;
+      height: 220px;
+      border: 3px solid rgba(147, 51, 234, 0.4);
+      border-top: none;
+      border-radius: 0 0 24px 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15), inset 3px 0 6px rgba(255,255,255,0.7), inset -3px 0 6px rgba(0,0,0,0.15);
+      background: rgba(180, 83, 9, 0.95);
+      transition: background-color 0.8s ease;
+    }
+
+    .glass-reflection {
+      position: absolute;
+      top: 0;
+      left: 4px;
+      width: 6px;
+      height: 100%;
+      background: linear-gradient(to right, rgba(255,255,255,0.6), rgba(255,255,255,0));
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .tube-status {
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .tube-status .tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      background: #fdf4ff;
+      border: 1px solid #f0abfc;
+      color: #a21caf;
+      border-radius: 20px;
+    }
+
+    /* Kontrol Tombol */
+    .button-stack {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-main {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+
+    .btn-main:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-alt {
+      background: #f3e8ff;
+      color: var(--primary-dark);
+    }
+
+    .btn-alt:hover {
+      background: #e9d5ff;
+    }
+
+    /* Submikroskopis Canvas */
+    .viewport-container {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #3b0764;
+      background: #110d24;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 270px;
+      display: block;
+    }
+
+    .legend-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px;
+      background: #1e173a;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: #e9d5ff;
+    }
+
+    .legend-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .indicator-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .ind-no2 {
+      background: #fb923c;
+      box-shadow: 0 0 8px #fb923c;
+    }
+
+    .ind-n2o4 {
+      background: #c084fc;
+      border-radius: 4px;
+      box-shadow: 0 0 8px #c084fc;
+    }
+
+    /* Panel Metrik */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: center;
+      position: relative;
+    }
+
+    .metric-number {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      font-feature-settings: "tnum";
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Pertanyaan Refleksi */
+    .reflective-box {
+      background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+      border: 1.5px solid #d8b4fe;
+      border-radius: 16px;
+      padding: 18px 24px;
+      box-shadow: 0 4px 15px rgba(109, 40, 217, 0.04);
+    }
+
+    .reflective-box h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .reflective-box ol {
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13.5px;
+      color: #3b0764;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-wrapper">
+    <!-- Header -->
+    <header>
+      <div class="title-area">
+        <h1>VIRTUAL LAB: KESETIMBANGAN DINAMIS</h1>
+        <p>Model Perubahan Konseptual (CCM) • Dual-Level Representation</p>
+      </div>
+      <div class="equation-badge">
+        2NO₂(g) <span class="rev">&#8652;</span> N₂O₄(g)
+      </div>
+    </header>
+
+    <!-- Grid 2 Kolom -->
+    <div class="grid-layout">
+      <!-- Kolom 1: Makroskopis -->
+      <div class="glass-card">
+        <div class="card-head">
+          <div class="card-icon">1</div>
+          <h2>Level Makroskopis</h2>
+        </div>
+
+        <div class="tube-stage">
+          <div class="stopper-cap"></div>
+          <div class="glass-tube" id="tubeGlass">
+            <div class="glass-reflection"></div>
+          </div>
+          <div class="tube-status">
+            <span class="tag" id="statusLabel">Warna: Cokelat Pekat (Awal)</span>
+          </div>
+        </div>
+
+        <div class="button-stack">
+          <button class="btn btn-main" id="btnToggle" onclick="toggleSim()">Mulai Reaksi</button>
+          <button class="btn btn-alt" onclick="resetSim()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Kolom 2: Submikroskopis -->
+      <div class="glass-card">
+        <div class="card-head">
+          <div class="card-icon">2</div>
+          <h2>Level Submikroskopis (Molekul Dinamis)</h2>
+        </div>
+
+        <div class="viewport-container">
+          <canvas id="simCanvas"></canvas>
+          <div class="legend-row">
+            <div class="legend-pill">
+              <span class="indicator-dot ind-no2"></span>
+              <span>Molekul NO₂ (Gas Cokelat)</span>
+            </div>
+            <div class="legend-pill">
+              <span class="indicator-dot ind-n2o4"></span>
+              <span>Molekul N₂O₄ (Gas Tak Berwarna)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-number" id="countNO2">40</div>
+            <div class="metric-label">Jumlah Partikel NO₂</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-number" id="countN2O4">0</div>
+            <div class="metric-label">Jumlah Partikel N₂O₄</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kotak Konflik Kognitif -->
+    <div class="reflective-box">
+      <h3>Panduan Diskusi Konflik Kognitif (Discuss 2 - Dissatisfaction)</h3>
+      <ol>
+        <li><strong>Cermati Tabung Makroskopis:</strong> Mengapa setelah beberapa saat, warna cokelat di dalam tabung <em>tidak pernah menghilang menjadi bening total</em> sebagaimana anggapan reaksi berkesudahan?</li>
+        <li><strong>Cermati Partikel Submikroskopis:</strong> Saat warna tabung sudah stabil (konstan), apakah molekul-molekul di dalamnya berhenti bergerak, atau <em>tetap aktif bertumbukan dan bereaksi bolak-balik tanpa henti</em>?</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = 270;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let isRunning = false;
+    let particles = [];
+    const TOTAL_N = 40;
+
+    class Particle {
+      constructor(type, x, y) {
+        this.type = type;
+        this.x = x || Math.random() * (canvas.width - 30) + 15;
+        this.y = y || Math.random() * (canvas.height - 30) + 15;
+        this.vx = (Math.random() - 0.5) * 2.8;
+        this.vy = (Math.random() - 0.5) * 2.8;
+        this.radius = type === 'NO2' ? 5.5 : 8.5;
+      }
+
+      move() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) this.vx *= -1;
+        if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        if (this.type === 'NO2') {
+          // NO2: Oranye menyala
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#fb923c';
+          ctx.shadowColor = '#fb923c';
+          ctx.shadowBlur = 6;
+        } else {
+          // N2O4: Molekul ganda ungu violet
+          ctx.roundRect(this.x - 9, this.y - 6, 18, 12, 5);
+          ctx.fillStyle = '#c084fc';
+          ctx.shadowColor = '#c084fc';
+          ctx.shadowBlur = 8;
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset glow
+        ctx.closePath();
+      }
+    }
+
+    function init() {
+      particles = [];
+      for (let i = 0; i < TOTAL_N; i++) {
+        particles.push(new Particle('NO2'));
+      }
+      updateState();
+    }
+
+    function toggleSim() {
+      isRunning = !isRunning;
+      const btn = document.getElementById('btnToggle');
+      btn.innerText = isRunning ? 'Jeda Reaksi' : 'Lanjutkan Reaksi';
+      btn.style.background = isRunning ? '#9333ea' : 'var(--primary)';
+      if (isRunning) loop();
+    }
+
+    function resetSim() {
+      isRunning = false;
+      document.getElementById('btnToggle').innerText = 'Mulai Reaksi';
+      document.getElementById('btnToggle').style.background = 'var(--primary)';
+      init();
+      render();
+    }
+
+    function handleReactions() {
+      let no2 = particles.filter(p => p.type === 'NO2');
+      let n2o4 = particles.filter(p => p.type === 'N2O4');
+
+      // Tumbukan 2 NO2 -> N2O4
+      for (let i = 0; i < no2.length; i++) {
+        for (let j = i + 1; j < no2.length; j++) {
+          let dx = no2[i].x - no2[j].x;
+          let dy = no2[i].y - no2[j].y;
+          let dist = Math.hypot(dx, dy);
+
+          if (dist < 16 && Math.random() < 0.12) {
+            let p1 = no2[i];
+            let p2 = no2[j];
+            particles = particles.filter(p => p !== p1 && p !== p2);
+            particles.push(new Particle('N2O4', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2));
+            return;
+          }
+        }
+      }
+
+      // Penguraian N2O4 -> 2 NO2
+      for (let i = 0; i < n2o4.length; i++) {
+        if (Math.random() < 0.04) {
+          let parent = n2o4[i];
+          particles = particles.filter(p => p !== parent);
+          particles.push(new Particle('NO2', parent.x - 7, parent.y));
+          particles.push(new Particle('NO2', parent.x + 7, parent.y));
+          return;
+        }
+      }
+    }
+
+    function updateState() {
+      let countNO2 = particles.filter(p => p.type === 'NO2').length;
+      let countN2O4 = particles.filter(p => p.type === 'N2O4').length;
+
+      document.getElementById('countNO2').innerText = countNO2;
+      document.getElementById('countN2O4').innerText = countN2O4;
+
+      // Update warna tabung kaca makroskopis
+      let opacity = 0.22 + (countNO2 / TOTAL_N) * 0.73;
+      let tube = document.getElementById('tubeGlass');
+      tube.style.backgroundColor = `rgba(180, 83, 9, ${opacity})`;
+
+      let label = document.getElementById('statusLabel');
+      if (countNO2 > 28) {
+        label.innerText = 'Warna: Cokelat Pekat (Awal)';
+      } else if (countNO2 > 12) {
+        label.innerText = 'Warna: Cokelat Konstan (Setimbang)';
+      } else {
+        label.innerText = 'Warna: Pudar';
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => p.draw());
+    }
+
+    function loop() {
+      if (!isRunning) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.move();
+        p.draw();
+      });
+      handleReactions();
+      updateState();
+      requestAnimationFrame(loop);
+    }
+
+    init();
+    render();
+  </script>
+</body>
+</html>
